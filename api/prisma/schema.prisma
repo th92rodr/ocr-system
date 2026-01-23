@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  documents Document[]
+
+  @@map("users")
+}
+
+model Document {
+  id       String         @id @default(uuid())
+  status   DocumentStatus
+  fileName String         @map("file_name")
+  mimeType String         @map("mime_type")
+  filePath String         @map("file_path")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  ocr      Ocr?
+  messages Message[]
+
+  @@index([userId], map: "idx_document_user")
+  @@map("documents")
+}
+
+model Ocr {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  documentId String   @unique @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id])
+
+  @@map("ocrs")
+}
+
+model Message {
+  id        String      @id @default(uuid())
+  content   String
+  role      MessageRole
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id])
+
+  @@index([documentId], map: "idx_message_document")
+  @@map("messages")
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
