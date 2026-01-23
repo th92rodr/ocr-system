@@ -1,0 +1,15 @@
+.vscode/
+node_modules/
+dist/
+uploads/
+.git/
+.gitignore
+.env
+.env.example
+.dockerignore
+Dockerfile
+docker-compose.yml
+eslint.config.mjs
+.prettierrc
+*.md
+requests.http
