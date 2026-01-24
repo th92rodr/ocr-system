@@ -3,10 +3,11 @@ import { OEM, createWorker } from 'tesseract.js';
 import { fromPath } from 'pdf2pic';
 import { PDFParse } from 'pdf-parse';
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
 
 import { PrismaService } from '../database/prisma.service';
 import { StorageProvider } from '../storage/storage.provider';
+import { EmptyOcrResultError } from './errors';
 
 @Injectable()
 export class OcrsService {
@@ -63,9 +64,11 @@ export class OcrsService {
   }
 
   private async extractTextFromImage(fileBuffer: Buffer): Promise<string> {
+    const langs = 'eng+por';
+
     let workerError: Error | null = null;
 
-    const worker = await createWorker('eng+por', OEM.DEFAULT, {
+    const worker = await createWorker(langs, OEM.DEFAULT, {
       errorHandler: (error) => {
         workerError = error;
       },
@@ -80,7 +83,7 @@ export class OcrsService {
 
       const text = result.data.text.trim();
       if (!text) {
-        throw new Error('OCR completed but extracted text is empty');
+        throw new EmptyOcrResultError();
       }
 
       return text;
@@ -91,11 +94,13 @@ export class OcrsService {
   }
 
   private async extractTextFromPDF(fileBuffer: Buffer): Promise<string> {
+    const minimumTextLength = 50;
+
     const parser = new PDFParse({ data: fileBuffer });
     const result = await parser.getText();
 
     const text = result.text.trim();
-    if (text.length < 50) {
+    if (text.length < minimumTextLength) {
       return this.ocrPdf(fileBuffer);
     }
 
@@ -104,16 +109,19 @@ export class OcrsService {
 
   private async ocrPdf(fileBuffer: Buffer): Promise<string> {
     const allPages = -1;
+    const temporaryDir = '/tmp/ocrs';
+    const temporaryFile = 'page';
 
-    const filePath = join('/tmp', `${Date.now()}.pdf`);
+    const filePath = join(temporaryDir, `${Date.now()}.pdf`);
+    await fs.mkdir(dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, fileBuffer);
 
     const converter = fromPath(filePath, {
       quality: 100,
       density: 600,
       format: 'png',
-      savePath: '/tmp/',
-      saveFilename: 'tmp',
+      savePath: temporaryDir,
+      saveFilename: temporaryFile,
       preserveAspectRatio: true,
     });
     const pages = await converter.bulk(allPages);
@@ -125,6 +133,8 @@ export class OcrsService {
       extractText += await this.extractTextFromImage(pageBuffer);
       extractText += '\n';
     }
+
+    await fs.rm(temporaryDir, { recursive: true, force: true });
 
     return extractText;
   }

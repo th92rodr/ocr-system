@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 import { StorageProvider } from './storage.provider';
+import { DocumentDownloadError, DocumentUploadError } from './errors';
 
 @Injectable()
 export class CloudStorageService implements StorageProvider {
@@ -26,16 +27,18 @@ export class CloudStorageService implements StorageProvider {
       });
 
     if (error) {
-      throw new Error(error.message);
+      throw new DocumentUploadError(error);
     }
   }
 
   async download(path: string): Promise<Buffer> {
+    const signedUrlExpiresInSeconds = 60;
+
     const { data, error } = await this.supabase.storage
-      .from(this.bucketName).createSignedUrl(path, 60);
+      .from(this.bucketName).createSignedUrl(path, signedUrlExpiresInSeconds);
 
     if (error) {
-      throw new Error(error.message);
+      throw new DocumentDownloadError(error);
     }
 
     const response = await fetch(data.signedUrl);
