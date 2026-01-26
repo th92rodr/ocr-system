@@ -1,0 +1,65 @@
+###
+# API Test File — Requires REST Client Extension
+#
+# Extension: "REST Client" by Huachao Mao
+# https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+#
+# How to use:
+# - Install the extension above in VS Code
+# - Click the "Send Request" text that appears above each request
+###
+
+@host = localhost
+@port = 3000
+@baseUrl = http://{{host}}:{{port}}
+@contentType = application/json
+@token =
+@documentId =
+
+###
+
+POST {{baseUrl}}/auth/register HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "email": "johndoe@mail.com",
+  "password": "123456789"
+}
+
+###
+
+POST {{baseUrl}}/auth/login HTTP/1.1
+Content-Type: {{contentType}}
+
+{
+  "email": "johndoe@mail.com",
+  "password": "123456789"
+}
+
+###
+
+GET {{baseUrl}}/documents HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+
+GET {{baseUrl}}/documents/{{documentId}} HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+###
+
+POST {{baseUrl}}/documents/{{documentId}}/messages HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "content": "Explain me the content of this document briefly."
+}
+
+###
+
+GET {{baseUrl}}/documents/{{documentId}}/messages HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
