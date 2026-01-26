@@ -21,7 +21,7 @@ export function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
     'image/jpeg',
   ];
 
-  const MAX_FILE_SIZE_MB = 5;
+  const MAX_FILE_SIZE_MB = 2;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
   function validateFile(file: File): string | null {
@@ -82,6 +82,13 @@ export function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
     }
   }
 
+  function handleClose() {
+    setFile(null);
+    setError(null);
+    setLoading(false);
+    onClose();
+  }
+
   function openFilePicker() {
     inputRef.current?.click();
   }
@@ -113,7 +120,7 @@ export function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
 
         <div className='flex justify-end gap-2 mt-6'>
           <button type='button'
-            onClick={onClose}
+            onClick={handleClose}
             disabled={loading}
             className='px-3 py-1 text-sm border border-gray-700 rounded hover:bg-gray-800 enabled:cursor-pointer disabled:cursor-not-allowed'>
             Cancel
