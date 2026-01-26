@@ -20,15 +20,22 @@ export function Sidebar({ documents, documentId, onSelect, onUpload, onLogout }:
       </button>
 
       <div className='flex-1 overflow-y-auto mt-5'>
-        {documents.map((document) => (
-          <button type='button'
-            key={document.id}
-            onClick={() => onSelect(document.id)}
-            className={`w-full text-left px-4 py-2 text-sm cursor-pointer
-            ${documentId === document.id ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800'}`}>
-            {document.fileName}
-          </button>
-        ))}
+        {documents.map((document) => {
+          const isStatusFailed = document.status === 'FAILED';
+          const isSelected = documentId === document.id;
+
+          return (
+            <button type='button'
+              key={document.id}
+              onClick={() => !isStatusFailed && onSelect(document.id)}
+              disabled={isStatusFailed}
+              className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left
+                ${isStatusFailed ? 'opacity-60' : isSelected ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 cursor-pointer'}`}>
+              {isStatusFailed ? <span aria-hidden>❌</span> : <span>✅</span>}
+              <span className='truncate'>{document.fileName}</span>
+            </button>
+          );
+        })}
       </div>
 
       <button type='button'

@@ -5,6 +5,7 @@ export type AuthResponse = {
 export type Document = {
   id: string;
   fileName: string;
+  status: 'UPLOADED' | 'PROCESSING' | 'COMPLETED' | 'FAILED',
 };
 
 export type Message = {
