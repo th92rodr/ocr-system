@@ -46,8 +46,13 @@ export default function LoginPage() {
       }
       router.replace('/');
 
-    } catch (error) {
-      setError(type === 'login' ? 'Invalid email or password' : 'Failed to register user');
+    } catch (error: any) {
+      if (error?.message) {
+        setError(error.message)
+      } else {
+        setError(type === 'login' ? 'Invalid email or password' : 'Failed to register user');
+      }
+
     } finally {
       setLoading(null);
     }
