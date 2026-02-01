@@ -19,11 +19,13 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
     setMessages([]);
     setInput('');
+    setSendError(null);
     setDownloadError(null);
   }, [documentId]);
 
@@ -47,15 +49,28 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
   }
 
   async function handleSend() {
-    if (!input.trim() || !documentId || !token) return;
+    if (!input.trim() || !documentId || !token || sending) return;
 
-    setSending(true);
-    await sendMessage(documentId, input, token);
-    setInput('');
-    setSending(false);
+    try {
+      setSending(true);
+      setSendError(null);
 
-    const data = await fetchMessages(documentId, token);
-    setMessages(data);
+      await sendMessage(documentId, input, token);
+      setInput('');
+
+      const data = await fetchMessages(documentId, token);
+      setMessages(data);
+
+    } catch (error: any) {
+      if (error?.message) {
+        setSendError(error.message);
+      } else {
+        setSendError('Failed to send message');
+      }
+
+    } finally {
+      setSending(false);
+    }
   }
 
   async function handleDownload() {
@@ -104,6 +119,12 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
       {downloadError && (
         <div className="mb-2 rounded border border-red-800 bg-red-900/30 px-3 py-2 text-sm text-red-400">
           {downloadError}
+        </div>
+      )}
+
+      {sendError && (
+        <div className="mb-2 rounded border border-yellow-800 bg-yellow-900/30 px-3 py-2 text-sm text-yellow-400">
+          {sendError}
         </div>
       )}
 
