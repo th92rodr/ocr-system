@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { Message } from '@prisma/client';
 
 import { PrismaService } from '../database/prisma.service';
@@ -26,15 +26,19 @@ export class MessagesService {
       throw new DocumentNotProcessedError();
     }
 
-    const message = await this.database.message.create({
-      data: {
-        documentId,
-        role: 'USER',
-        content,
-      },
-    });
+    try {
+      await this.database.message.create({
+        data: {
+          documentId,
+          role: 'USER',
+          content,
+        },
+      });
+    } catch {
+      throw new InternalServerErrorException('Failed to create message');
+    }
 
-    const prompt = this.buildPrompt(document.ocr.text, message.content);
+    const prompt = this.buildPrompt(document.ocr.text, content);
 
     try {
       const llmResponse = await this.llmClient.generateResponse(prompt);
@@ -56,18 +60,27 @@ export class MessagesService {
   }
 
   async list(userId: string, documentId: string): Promise<Message[]> {
-    const document = await this.database.document.findUnique({
-      where: { id: documentId },
-    });
+    try {
+      const document = await this.database.document.findUnique({
+        where: { id: documentId },
+      });
 
-    if (!document || document.userId !== userId) {
-      throw new NotFoundException('Document not found');
+      if (!document || document.userId !== userId) {
+        throw new NotFoundException('Document not found');
+      }
+
+      return this.database.message.findMany({
+        where: { documentId },
+        orderBy: { createdAt: 'asc' },
+      });
+
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to list messages');
     }
-
-    return this.database.message.findMany({
-      where: { documentId },
-      orderBy: { createdAt: 'asc' },
-    });
   }
 
   private buildPrompt(ocrText: string, message: string) {
