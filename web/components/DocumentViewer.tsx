@@ -19,6 +19,13 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMessages([]);
+    setInput('');
+    setDownloadError(null);
+  }, [documentId]);
 
   useEffect(() => {
     if (!documentId || !token) return;
@@ -52,10 +59,11 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
   }
 
   async function handleDownload() {
-    if (!documentId || !token) return;
+    if (!documentId || !token || downloading) return;
 
     try {
       setDownloading(true);
+      setDownloadError(null);
 
       const { blob, filename } = await downloadDocument(documentId, token);
 
@@ -68,8 +76,13 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
       a.remove();
       URL.revokeObjectURL(url);
 
-    } catch {
-      alert('Failed to download document');
+    } catch (error: any) {
+      if (error?.message) {
+        setDownloadError(error.message);
+      } else {
+        setDownloadError('Failed to download document');
+      }
+
     } finally {
       setDownloading(false);
     }
@@ -87,6 +100,12 @@ export function DocumentViewer({ documentId }: DocumentViewerProps) {
           {downloading ? 'Downloading…' : 'Download'}
         </button>
       </header>
+
+      {downloadError && (
+        <div className="mb-2 rounded border border-red-800 bg-red-900/30 px-3 py-2 text-sm text-red-400">
+          {downloadError}
+        </div>
+      )}
 
       <div className='flex-1 overflow-y-auto mb-2 px-2'>
         {messages.length === 0 ? (

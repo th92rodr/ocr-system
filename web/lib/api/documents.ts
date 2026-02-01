@@ -1,4 +1,4 @@
-import { apiFetch } from './http';
+import { ApiError, apiFetch } from './http';
 import type { Document } from '@/lib/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL!;
@@ -23,7 +23,23 @@ export async function downloadDocument(documentId: string, token: string) {
   });
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    let error: ApiError;
+
+    try {
+      const data = await response.json();
+      error = {
+        statusCode: data.statusCode ?? response.status,
+        message: data.message ?? 'Failed to download document',
+      };
+
+    } catch {
+      error = {
+        statusCode: response.status,
+        message: 'Failed to download document',
+      };
+    }
+
+    throw error;
   }
 
   const blob = await response.blob();

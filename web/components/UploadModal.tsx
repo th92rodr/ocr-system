@@ -75,8 +75,14 @@ export function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
       await onUpload(file);
       setFile(null);
       onClose();
-    } catch {
-      setError('Upload failed');
+
+    } catch (error: any) {
+      if (error?.message) {
+        setError(error.message);
+      } else {
+        setError('Upload failed');
+      }
+
     } finally {
       setLoading(false);
     }
