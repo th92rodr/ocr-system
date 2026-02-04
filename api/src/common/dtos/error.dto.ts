@@ -6,6 +6,17 @@ export class ErrorResponseDto {
   message: string;
 }
 
+export class NotFoundResponseDto extends ErrorResponseDto {
+  @ApiProperty({ example: 404 })
+  statusCode: number;
+
+  @ApiProperty({ example: 'NotFound' })
+  error: string;
+
+  @ApiProperty({ example: 'Document not found' })
+  message: string;
+}
+
 export class InternalServerErrorResponseDto extends ErrorResponseDto {
   @ApiProperty({ example: 500 })
   statusCode: number;

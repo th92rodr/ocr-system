@@ -4,7 +4,7 @@ import { Message } from '@prisma/client';
 
 import { MessagesController } from './messages.controller';
 import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dtos/create-message.dto';
+import { CreateMessageDto } from './dtos/messages.dto';
 import { AuthGuard } from '../auth/auth.guard';
 
 describe('MessagesController', () => {
