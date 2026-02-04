@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
-import { LoginDto } from './dtos/login.dto';
+import { AuthDto } from './dtos/auth.dto';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -36,7 +36,7 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should call AuthService.register with the required params', async () => {
-      const body: LoginDto = { email: 'test@test.com', password: '123456789' };
+      const body: AuthDto = { email: 'test@test.com', password: '123456789' };
 
       const token = { token: 'test-token' };
       mockAuthService.register.mockResolvedValue(token);
@@ -50,7 +50,7 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should call AuthService.login with the required params', async () => {
-      const body: LoginDto = { email: 'test@test.com', password: '123456789' };
+      const body: AuthDto = { email: 'test@test.com', password: '123456789' };
 
       const token = { token: 'test-token' };
       mockAuthService.login.mockResolvedValue(token);
