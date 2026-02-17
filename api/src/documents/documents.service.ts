@@ -23,14 +23,8 @@ export class DocumentsService {
 
     try {
       await this.storageProvider.upload(file, filepath);
-    } catch {
-      throw new InternalServerErrorException('Failed to upload file');
-    }
 
-    let document: Document;
-
-    try {
-      document = await this.database.document.create({
+      const document = await this.database.document.create({
         data: {
           userId,
           fileName: file.originalname,
@@ -39,13 +33,16 @@ export class DocumentsService {
           filePath: filepath,
         },
       });
+
+      await this.ocrsService.process(document.id);
+
+      return document;
+
     } catch {
+      await this.storageProvider.delete(filepath);
+
       throw new InternalServerErrorException('Failed to upload file');
     }
-
-    await this.ocrsService.process(document.id);
-
-    return document;
   }
 
   async list(userId: string): Promise<Document[]> {

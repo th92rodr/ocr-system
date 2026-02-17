@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 import { StorageProvider } from './storage.provider';
-import { DocumentDownloadError, DocumentUploadError } from './errors';
+import { DocumentDeleteError, DocumentDownloadError, DocumentUploadError } from './errors';
 
 @Injectable()
 export class CloudStorageService implements StorageProvider {
@@ -45,5 +45,15 @@ export class CloudStorageService implements StorageProvider {
     const response = await fetch(data.signedUrl);
 
     return Buffer.from(await response.arrayBuffer());
+  }
+
+  async delete(path: string): Promise<void> {
+    const { error } = await this.client.storage
+      .from(this.bucketName)
+      .remove([path]);
+
+      if (error) {
+        throw new DocumentDeleteError(error);
+      }
   }
 }

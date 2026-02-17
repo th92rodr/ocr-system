@@ -19,4 +19,9 @@ export class LocalStorageService implements StorageProvider {
     const filepath = join(this.basePath, path);
     return fs.readFile(filepath);
   }
+
+  async delete(path: string): Promise<void> {
+    const filepath = join(this.basePath, path);
+    await fs.unlink(filepath);
+  }
 }
