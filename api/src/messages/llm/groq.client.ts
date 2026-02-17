@@ -6,12 +6,12 @@ import { LLMClient } from './llm.client';
 
 @Injectable()
 export class GroqClient implements LLMClient {
-  private client: OpenAI;
-  private model: string;
+  private readonly client: OpenAI;
+  private readonly model: string;
 
-  constructor(private config: ConfigService) {
+  constructor(private readonly config: ConfigService) {
     this.client = new OpenAI({
-      apiKey: config.get<string>('GROQ_API_KEY'),
+      apiKey: config.get<string>('LLM_API_KEY'),
       baseURL: 'https://api.groq.com/openai/v1',
     });
     this.model = config.get<string>('LLM_MODEL')!;

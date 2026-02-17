@@ -11,6 +11,8 @@ import { EmptyOcrResultError } from './errors';
 
 @Injectable()
 export class OcrsService {
+  private readonly languages = 'eng+por';
+
   constructor(
     private readonly database: PrismaService,
     private readonly storageProvider: StorageProvider,
@@ -64,11 +66,9 @@ export class OcrsService {
   }
 
   private async extractTextFromImage(fileBuffer: Buffer): Promise<string> {
-    const langs = 'eng+por';
-
     let workerError: Error | null = null;
 
-    const worker = await createWorker(langs, OEM.DEFAULT, {
+    const worker = await createWorker(this.languages, OEM.DEFAULT, {
       errorHandler: (error) => {
         workerError = error;
       },

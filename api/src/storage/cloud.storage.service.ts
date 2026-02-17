@@ -7,19 +7,19 @@ import { DocumentDownloadError, DocumentUploadError } from './errors';
 
 @Injectable()
 export class CloudStorageService implements StorageProvider {
-  private supabase: SupabaseClient;
-  private bucketName: string;
+  private readonly client: SupabaseClient;
+  private readonly bucketName: string;
 
-  constructor(private config: ConfigService) {
-    this.supabase = createClient(
-      config.get<string>('SUPABASE_URL')!,
-      config.get<string>('SUPABASE_KEY')!,
+  constructor(private readonly config: ConfigService) {
+    this.client = createClient(
+      config.get<string>('CLOUD_STORAGE_URL')!,
+      config.get<string>('CLOUD_STORAGE_KEY')!,
     );
-    this.bucketName = config.get<string>('SUPABASE_BUCKET_NAME')!;
+    this.bucketName = config.get<string>('CLOUD_STORAGE_BUCKET_NAME')!;
   }
 
   async upload(file: Express.Multer.File, path: string): Promise<void> {
-    const { error } = await this.supabase.storage
+    const { error } = await this.client.storage
       .from(this.bucketName)
       .upload(path, file.buffer, {
         contentType: file.mimetype,
@@ -34,8 +34,9 @@ export class CloudStorageService implements StorageProvider {
   async download(path: string): Promise<Buffer> {
     const signedUrlExpiresInSeconds = 60;
 
-    const { data, error } = await this.supabase.storage
-      .from(this.bucketName).createSignedUrl(path, signedUrlExpiresInSeconds);
+    const { data, error } = await this.client.storage
+      .from(this.bucketName)
+      .createSignedUrl(path, signedUrlExpiresInSeconds);
 
     if (error) {
       throw new DocumentDownloadError(error);

@@ -11,11 +11,11 @@ export const envSchema = z.object({
 
   PASSWORD_PEPPER: z.string(),
 
-  SUPABASE_URL: z.url(),
-  SUPABASE_KEY: z.string(),
-  SUPABASE_BUCKET_NAME: z.string(),
+  CLOUD_STORAGE_URL: z.url(),
+  CLOUD_STORAGE_KEY: z.string(),
+  CLOUD_STORAGE_BUCKET_NAME: z.string(),
 
-  GROQ_API_KEY: z.string(),
+  LLM_API_KEY: z.string(),
   LLM_MODEL: z.string(),
 });
 
