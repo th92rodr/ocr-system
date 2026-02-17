@@ -9,6 +9,8 @@ export const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRATION_TIME: z.string().default('1d'),
 
+  PASSWORD_PEPPER: z.string(),
+
   SUPABASE_URL: z.url(),
   SUPABASE_KEY: z.string(),
   SUPABASE_BUCKET_NAME: z.string(),
