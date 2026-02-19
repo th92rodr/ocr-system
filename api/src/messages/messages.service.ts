@@ -1,16 +1,25 @@
-import { Injectable, InternalServerErrorException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Message } from '@prisma/client';
 
 import { PrismaService } from '../database/prisma.service';
 import { LLMClient } from './llm/llm.client';
 import { DocumentNotProcessedError } from './errors';
+import { MessageListResponseDto } from './dtos/messages.dto';
 
 @Injectable()
 export class MessagesService {
+  private readonly paginationMaxLimit: number;
+  private readonly paginationDefaultLimit: number;
+
   constructor(
     private readonly database: PrismaService,
     private readonly llmClient: LLMClient,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.paginationMaxLimit = config.get<number>('PAGINATION_MAX_LIMIT')!;
+    this.paginationDefaultLimit = config.get<number>('PAGINATION_DEFAULT_LIMIT')!;
+  }
 
   async create(userId: string, documentId: string, content: string): Promise<Message> {
     const document = await this.database.document.findUnique({
@@ -59,7 +68,7 @@ export class MessagesService {
     }
   }
 
-  async list(userId: string, documentId: string): Promise<Message[]> {
+  async list(userId: string, documentId: string, limit?: number, cursor?: string): Promise<MessageListResponseDto> {
     try {
       const document = await this.database.document.findUnique({
         where: { id: documentId },
@@ -69,14 +78,39 @@ export class MessagesService {
         throw new NotFoundException('Document not found');
       }
 
-      return this.database.message.findMany({
+      if (limit && limit > 0) {
+        limit = Math.min(limit, this.paginationMaxLimit);
+      } else {
+        limit = this.paginationDefaultLimit;
+      }
+
+      let messages = await this.database.message.findMany({
         where: { documentId },
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
       });
+
+      let nextCursor: string | null = null;
+      if (messages.length > limit) {
+        messages = messages.slice(0, limit+1);
+        const nextMessage = messages.pop();
+        nextCursor = nextMessage!.id;
+      }
+
+      return {
+        data: messages,
+        nextCursor,
+      }
 
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
+      }
+
+      if (error.code === 'P2025') {
+        throw new BadRequestException('Invalid cursor');
       }
 
       throw new InternalServerErrorException('Failed to list messages');

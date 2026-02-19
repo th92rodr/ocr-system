@@ -4,7 +4,7 @@ import { Message } from '@prisma/client';
 
 import { MessagesController } from './messages.controller';
 import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dtos/messages.dto';
+import { CreateMessageDto, MessageListResponseDto } from './dtos/messages.dto';
 import { AuthGuard } from '../auth/auth.guard';
 
 describe('MessagesController', () => {
@@ -37,19 +37,21 @@ describe('MessagesController', () => {
   });
 
   describe('create', () => {
-    it('should create message', async () => {
-      const userId = 'test-user-id';
-      const documentId = 'test-document-id';
-      const body: CreateMessageDto = { content: 'Test message content' };
-      const message = {
-        id: 'test-message-id',
-        documentId,
-        content: body.content,
-      } as Message;
+    const userId = 'test-user-id';
+    const documentId = 'test-document-id';
+    const body: CreateMessageDto = { content: 'Test message content' };
+    const message: Message = {
+      id: 'test-message-id',
+      documentId,
+      content: body.content,
+      role: 'ASSISTANT',
+      createdAt: new Date(),
+    };
 
+    it('should create message', async () => {
       mockMessagesService.create.mockResolvedValue(message);
 
-      const response = await controller.create(documentId, body, { user: { sub: userId }} as Request);
+      const response = await controller.create({ user: { sub: userId }} as Request, documentId, body);
 
       expect(service.create).toHaveBeenCalledWith(userId, documentId, body.content);
       expect(response).toEqual(message);
@@ -57,19 +59,34 @@ describe('MessagesController', () => {
   });
 
   describe('list', () => {
+    const userId = 'test-user-id';
+    const documentId = 'test-document-id';
+    const messages: MessageListResponseDto = {
+      data: [
+        { id: 'test-message-1', documentId, content: 'Test message 1', role: 'USER', createdAt: new Date() },
+        { id: 'test-message-2', documentId, content: 'Test message 2', role: 'ASSISTANT', createdAt: new Date() },
+      ],
+      nextCursor: null,
+    };
+
     it('should list messages', async () => {
-      const userId = 'test-user-id';
-      const documentId = 'test-document-id';
-      const messages = [
-        { id: 'test-document-1' },
-        { id: 'test-document-2' },
-      ] as Message[];
+      mockMessagesService.list.mockResolvedValue(messages);
+
+      const response = await controller.list({ user: { sub: userId }} as Request, documentId, {});
+
+      expect(service.list).toHaveBeenCalledWith(userId, documentId, undefined, undefined);
+      expect(response).toEqual(messages);
+    });
+
+    it('should list messages with pagination', async () => {
+      const limit = 20;
+      const cursor = 'test-cursor';
 
       mockMessagesService.list.mockResolvedValue(messages);
 
-      const response = await controller.list(documentId, { user: { sub: userId }} as Request);
+      const response = await controller.list({ user: { sub: userId }} as Request, documentId, { limit, cursor });
 
-      expect(service.list).toHaveBeenCalledWith(userId, documentId);
+      expect(service.list).toHaveBeenCalledWith(userId, documentId, limit, cursor);
       expect(response).toEqual(messages);
     });
   });

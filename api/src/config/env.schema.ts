@@ -17,6 +17,9 @@ export const envSchema = z.object({
 
   LLM_API_KEY: z.string(),
   LLM_MODEL: z.string(),
+
+  PAGINATION_MAX_LIMIT: z.string().transform((value) => Number(value)),
+  PAGINATION_DEFAULT_LIMIT: z.string().transform((value) => Number(value)),
 });
 
 export type Env = z.infer<typeof envSchema>;

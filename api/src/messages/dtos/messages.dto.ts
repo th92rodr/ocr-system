@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 
 import { ErrorResponseDto } from '../../common/dtos/error.dto';
 
@@ -9,24 +10,57 @@ export class CreateMessageDto {
   content: string;
 }
 
+export class ListMessagesQueryDto {
+  @ApiPropertyOptional({ description: 'Number of messages to return', example: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number;
+
+  @ApiPropertyOptional({ description: 'Cursor for pagination', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @IsOptional()
+  @IsString()
+  cursor?: string;
+}
+
 export class MessageResponseDto {
-  @ApiProperty()
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   documentId: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'This document is an invoice ...' })
   content: string;
 
-  @ApiProperty({ enum: ['USER', 'ASSISTANT'] })
+  @ApiProperty({ enum: ['USER', 'ASSISTANT'], example: 'ASSISTANT' })
   role: 'USER' | 'ASSISTANT';
 
   @ApiProperty()
   createdAt: Date;
 }
 
-export class TooEarlyResponseDto extends ErrorResponseDto {
+export class MessageListResponseDto {
+  @ApiProperty({ type: [MessageResponseDto] })
+  data: MessageResponseDto[];
+
+  @ApiProperty({ nullable: true, example: '123e4567-e89b-12d3-a456-426614174000' })
+  nextCursor: string | null;
+}
+
+export class MessagesBadRequestResponseDto extends ErrorResponseDto {
+  @ApiProperty({ example: 400 })
+  statusCode: number;
+
+  @ApiProperty({ example: 'BadRequest' })
+  error: string;
+
+  @ApiProperty({ example: 'Invalid cursor' })
+  message: string;
+}
+
+export class MessagesTooEarlyResponseDto extends ErrorResponseDto {
   @ApiProperty({ example: 425 })
   statusCode: number;
 
@@ -37,7 +71,7 @@ export class TooEarlyResponseDto extends ErrorResponseDto {
   message: string;
 }
 
-export class ServiceUnavailableResponseDto extends ErrorResponseDto {
+export class MessagesServiceUnavailableResponseDto extends ErrorResponseDto {
   @ApiProperty({ example: 503 })
   statusCode: number;
 
